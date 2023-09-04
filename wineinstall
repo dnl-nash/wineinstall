@@ -1,0 +1,141 @@
+#!/bin/zsh
+export WINEDEBUG=-all
+export mydir=$PWD
+if uname -s|grep -iqw linux;then
+export plat="linux"
+export wine=`which wine`
+export winetricks=`which winetricks`
+else
+export plat="mac"
+export wine="/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine"
+export winetricks=`which winetricks`
+fi
+if [ $plat = "mac" ];then
+if which brew > /dev/null 2> /dev/null;then
+sleep .01
+else
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+fi
+fi
+if [ -e $wine ];then
+sleep .01
+else
+if [ $plat = "mac" ];then
+brew cask install xquartz wine-stable
+else
+echo please install wine package
+exit 1
+fi
+fi
+if which winetricks > /dev/null 2> /dev/null;then
+sleep .01
+else
+if [ $plat = "mac" ];then
+brew install winetricks
+else
+export cabtmp=`mktemp -d`
+while true;do
+if curl -Lo $cabtmp/winetricks https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks;then
+break
+else
+continue
+fi
+done
+chmod 700 $cabtmp/winetricks 
+export prevpath=$PATH
+export PATH=$cabtmp:$prevpath
+export winetricks=$cabtmp/winetricks
+fi
+fi
+if [ -z $cabtmp ];then
+export cabtmp=`mktemp -d`
+else
+sleep .01
+fi
+base64 -d > $cabtmp/cabextract<<EOF
+IyEvYmluL3pzaApleHBvcnQgY2FiZXh0cmFjdD1gd2hpY2ggLWEgY2FiZXh0cmFjdHx0YWlsIC1u
+IDFgCiRjYWJleHRyYWN0IC1rICRACg==
+EOF
+chmod 700 $cabtmp/cabextract
+export prevpath=$PATH
+export PATH=$cabtmp:$prevpath
+cd
+if [ -e espeak.exe ];then
+sleep .01
+else
+export dlespeak=1
+while true;do
+if curl -Lo espeak.exe https://sourceforge.net/projects/espeak/files/espeak/espeak-1.48/setup_espeak-1.48.04.exe;then
+break
+else
+continue
+fi
+done
+fi
+if [ -e nvda.exe ];then
+sleep .01
+else
+export dlnvda=1
+while true;do
+if curl -Lo nvda.exe https://www.nvaccess.org/download/nvda/releases/2023.1/nvda_2023.1.exe;then
+break
+else
+continue
+fi
+done
+fi
+if [ -e ~/.wine ];then
+$wine wineboot -k -f
+mv ~/.wine ~/.wine.`uuidgen`
+fi
+$wine wineboot -i&
+sleep 20
+killall -9 control.exe
+for pkg in `echo -en sapi dx8vb vb2run vb3run vb4run vb6run mfc42 autostart_winedbg=disabled nocrashdialog usetakefocus=y videomemorysize=default comctl32ocx comdlg32ocx msaa riched20 riched30 richtx32 tabctl32 urlmon dotnet40 dotnet45 win81`;do
+$winetricks -q $pkg
+done
+wine espeak.exe /verysilent
+$wine reg add "hkcu\software\microsoft\speech\voices" /v "DefaultVoice" /d "hklm\software\microsoft\speech\voices\tokens\espeak2" /f
+$wine reg add "hkcu\software\microsoft\windows\currentversion\run" /v "nvda" /d "c:\\Program Files (x86)\\NVDA\\nvda.exe" /f
+mkdir -p ~/.wine/drive_c/users/`whoami`/AppData/Roaming/nvda
+base64 -d > ~/.wine/drive_c/users/`whoami`/AppData/Roaming/nvda/nvda.ini<<EOF
+c2NoZW1hVmVyc2lvbiA9IDgNClt1cGRhdGVdDQoJYWxsb3dVc2FnZVN0YXRzID0gRmFsc2UNCglh
+c2tlZEFsbG93VXNhZ2VTdGF0cyA9IFRydWUNCltnZW5lcmFsXQ0KCXNob3dXZWxjb21lRGlhbG9n
+QXRTdGFydHVwID0gRmFsc2UNCltzcGVlY2hdDQoJc3ludGggPSBzYXBpNQ0KCVtbc2FwaTVdXQ0K
+CQl2b2ljZSA9IEhLRVlfTE9DQUxfTUFDSElORVxTT0ZUV0FSRVxNaWNyb3NvZnRcU3BlZWNoXFZv
+aWNlc1xUb2tlbnNcZVNwZWFrDQoJCXZvbHVtZSA9IDEwMA0KCQlyYXRlID0gNTANCltrZXlib2Fy
+ZF0NCglrZXlib2FyZExheW91dCA9IGxhcHRvcA0K
+EOF
+wine nvda.exe --install-silent&
+while true;do
+if [ -e ~/.wine/drive_c/Program\ Files\ \(x86\)/NVDA/nvda.exe ];then
+wineboot -s -f -k
+break
+else
+sleep 1
+fi
+done
+if echo $0|grep -qw nodesktop;then
+sleep .01
+else
+base64 -d > ~/.config/autostart/winenvda.desktop<<EOF
+W0Rlc2t0b3AgRW50cnldClR5cGU9QXBwbGljYXRpb24KTmFtZT13aW5lIGF1dG9leGVjCkV4ZWM9
+d2luZWJvb3QKSGlkZGVuPWZhbHNlCk5vRGlzcGxheT1mYWxzZQpYLUdOT01FLUF1dG9zdGFydC1l
+bmFibGVkPXRydWUKQ29tbWVudFtlbl9VU109Cg==
+EOF
+chmod 700 ~/.config/autostart/winenvda.desktop
+fi
+export PATH=$prevpath
+rm -rf $cabtmp
+unset cabtmp
+unset prevpath
+if [ -z $dlespeak ];then
+sleep .01
+else
+rm espeak.exe
+fi
+if [ -z $dlnvda ];then
+sleep .01
+else
+rm nvda.exe
+fi
