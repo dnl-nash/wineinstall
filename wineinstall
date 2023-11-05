@@ -1,9 +1,25 @@
 #!/bin/zsh
-export WINEDEBUG=-all
 export mydir=$PWD
+if [ -z $WINEDEBUG ];then
+export WINEDEBUG=-all
+fi
+if [ -z $WINEPREFIX ];then
+export WINEPREFIX=~/.wine
+fi
+if [ -z $WINEARCH ];then
+export WINEARCH=win64
+fi
+if [ -z $WINEUSER ];then
+export WINEUSER=`whoami`
+fi
+if [ -z $WINEROOTFS ];then
+export WINEROOTFS=/
+fi
 if uname -s|grep -iqw linux;then
 export plat="linux"
+if [ -z $wine ];then
 export wine=`which wine`
+fi
 export winetricks=`which winetricks`
 else
 export plat="mac"
@@ -77,28 +93,60 @@ sleep .01
 else
 export dlnvda=1
 while true;do
-if curl -Lo nvda.exe https://www.nvaccess.org/download/nvda/releases/2023.2/nvda_2023.2.exe;then
+if curl -Lo nvda.exe https://www.nvaccess.org/download/nvda/releases/2023.3/nvda_2023.3.exe;then
 break
 else
 continue
 fi
 done
 fi
-if [ -e ~/.wine ];then
+if [ -z $WINEKEEP ];then
+if [ -e $WINEPREFIX ];then
 $wine wineboot -k -f
-mv ~/.wine ~/.wine.`uuidgen`
+mv $WINEPREFIX $WINEPREFIX.`uuidgen`
+else
+true
+fi
+else
+if [ -e $WINEPREFIX/dosdevices ];then
+true
+else
+mkdir -p $WINEPREFIX/dosdevices
+fi
+if [ -e $WINEPREFIX/dosdevices/c: ];then
+true
+else
+export dir=$PWD
+cd $WINEPREFIX/dosdevices
+ln -s ../drive_c c:
+cd $dir
+fi
+if [ -e $WINEPREFIX/dosdevices/z: ];then
+true
+else
+export dir=$PWD
+cd $WINEPREFIX/dosdevices
+ln -s $WINEROOTFS z:
+cd $dir
+fi
 fi
 $wine wineboot -i&
 sleep 20
 killall -9 control.exe
-for pkg in `echo -en sapi dx8vb vb2run vb3run vb4run vb6run mfc42 autostart_winedbg=disabled nocrashdialog usetakefocus=y videomemorysize=default comctl32ocx comdlg32ocx msaa riched20 riched30 richtx32 tabctl32 urlmon dotnet40 dotnet45 win81`;do
+for pkg in `echo -en sapi dx8vb vb2run vb3run vb4run vb6run mfc42 autostart_winedbg=disabled nocrashdialog usetakefocus=y videomemorysize=default comctl32ocx comdlg32ocx msaa riched20 riched30 richtx32 tabctl32 urlmon win81`;do
+echo -en installing $pkg
+export desc=`cat $winetricks|grep -i w_metadata\ $pkg --after-context=1|tail -n 1|grep title=|cut -f 2 -d \=|cut -f 2 -d \"`
+if [ -z $desc ];then
+true
+else
+echo ,\ $desc
+fi
 $winetricks -q $pkg
 done
-wine espeak.exe /verysilent
+$wine espeak.exe /verysilent
 $wine reg add "hkcu\software\microsoft\speech\voices" /v "DefaultVoice" /d "hklm\software\microsoft\speech\voices\tokens\espeak2" /f
-$wine reg add "hkcu\software\microsoft\windows\currentversion\run" /v "nvda" /d "c:\\Program Files (x86)\\NVDA\\nvda.exe" /f
-mkdir -p ~/.wine/drive_c/users/`whoami`/AppData/Roaming/nvda
-base64 -d > ~/.wine/drive_c/users/`whoami`/AppData/Roaming/nvda/nvda.ini<<EOF
+mkdir -p $WINEPREFIX/drive_c/users/$WINEUSER/AppData/Roaming/nvda
+base64 -d > $WINEPREFIX/drive_c/users/$WINEUSER/AppData/Roaming/nvda/nvda.ini<<EOF
 c2NoZW1hVmVyc2lvbiA9IDgNClt1cGRhdGVdDQoJYWxsb3dVc2FnZVN0YXRzID0gRmFsc2UNCglh
 c2tlZEFsbG93VXNhZ2VTdGF0cyA9IFRydWUNCltnZW5lcmFsXQ0KCXNob3dXZWxjb21lRGlhbG9n
 QXRTdGFydHVwID0gRmFsc2UNCltzcGVlY2hdDQoJc3ludGggPSBzYXBpNQ0KCVtbc2FwaTVdXQ0K
@@ -106,15 +154,21 @@ CQl2b2ljZSA9IEhLRVlfTE9DQUxfTUFDSElORVxTT0ZUV0FSRVxNaWNyb3NvZnRcU3BlZWNoXFZv
 aWNlc1xUb2tlbnNcZVNwZWFrDQoJCXZvbHVtZSA9IDEwMA0KCQlyYXRlID0gNTANCltrZXlib2Fy
 ZF0NCglrZXlib2FyZExheW91dCA9IGxhcHRvcA0K
 EOF
-wine nvda.exe --install-silent&
+$wine nvda.exe --install-silent&
 while true;do
-if [ -e ~/.wine/drive_c/Program\ Files\ \(x86\)/NVDA/nvda.exe ];then
-wineboot -s -f -k
+if [ -e $WINEPREFIX/drive_c/Program\ Files\ \(x86\)/NVDA/nvda.exe ]||[ -e $WINEPREFIX/drive_c/Program\ Files/NVDA/nvda.exe ];then
+$wine wineboot -s -f -k
 break
 else
 sleep 1
 fi
 done
+if [ -e $WINEPREFIX/drive_c/Program\ Files\ \(x86\)/NVDA/nvda.exe ];then
+$wine reg add "hkcu\software\microsoft\windows\currentversion\run" /v "nvda" /d "c:\\Program Files (x86)\\NVDA\\nvda.exe" /f
+fi
+if [ -e $WINEPREFIX/drive_c/Program\ Files/NVDA/nvda.exe ];then
+$wine reg add "hkcu\software\microsoft\windows\currentversion\run" /v "nvda" /d "c:\\Program Files\\NVDA\\nvda.exe" /f
+fi
 if echo $0|grep -qw nodesktop;then
 sleep .01
 else
