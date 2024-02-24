@@ -172,6 +172,7 @@ fi
 if echo $0|grep -qw nodesktop;then
 sleep .01
 else
+mkdir -p ~/.config/autostart
 base64 -d > ~/.config/autostart/winenvda.desktop<<EOF
 W0Rlc2t0b3AgRW50cnldClR5cGU9QXBwbGljYXRpb24KTmFtZT13aW5lIGF1dG9leGVjCkV4ZWM9
 d2luZWJvb3QKSGlkZGVuPWZhbHNlCk5vRGlzcGxheT1mYWxzZQpYLUdOT01FLUF1dG9zdGFydC1l
