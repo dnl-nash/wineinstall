@@ -133,7 +133,7 @@ fi
 $wine wineboot -i&
 sleep 20
 killall -9 control.exe
-for pkg in `echo -en sapi dx8vb vb2run vb3run vb4run vb6run mfc42 autostart_winedbg=disabled nocrashdialog usetakefocus=y videomemorysize=default comctl32ocx comdlg32ocx msaa riched20 riched30 richtx32 tabctl32 urlmon win81`;do
+for pkg in `echo -en sapi dx8vb vb2run vb3run vb4run vb6run mfc42 autostart_winedbg=disabled nocrashdialog usetakefocus=y videomemorysize=default comctl32ocx comdlg32ocx msaa riched20 riched30 richtx32 tabctl32 urlmon dotnet40 win81`;do
 echo -en installing $pkg
 export desc=`cat $winetricks|grep -i w_metadata\ $pkg --after-context=1|tail -n 1|grep title=|cut -f 2 -d \=|cut -f 2 -d \"`
 if [ -z $desc ];then
