@@ -93,7 +93,7 @@ sleep .01
 else
 export dlnvda=1
 while true;do
-if curl -Lo nvda.exe https://www.nvaccess.org/download/nvda/releases/2023.3.3/nvda_2023.3.3.exe;then
+if curl -Lo nvda.exe https://www.nvaccess.org/download/nvda/releases/2023.3.4/nvda_2023.3.4.exe;then
 break
 else
 continue
