@@ -194,3 +194,4 @@ sleep .01
 else
 rm nvda.exe
 fi
+wineboot
