@@ -1,4 +1,5 @@
 #!/bin/zsh
+export nvdaver=2024.1
 export mydir=$PWD
 if [ -z $WINEDEBUG ];then
 export WINEDEBUG=-all
@@ -42,6 +43,18 @@ else
 echo please install wine package
 exit 1
 fi
+fi
+if which lynx > /dev/null 2> /dev/null;then
+sleep .01
+else
+echo please install lynx package
+exit 1
+fi
+if which cabextract > /dev/null 2> /dev/null;then
+sleep .01
+else
+echo please install cabextract package
+exit 1
 fi
 if which winetricks > /dev/null 2> /dev/null;then
 sleep .01
@@ -92,8 +105,12 @@ if [ -e nvda.exe ];then
 sleep .01
 else
 export dlnvda=1
+export nvdaurl=`lynx --dump -listonly -nonumbers https://www.nvaccess.org/download/nvda/releases/stable|grep -w exe`
+if [ -z $nvdaurl ];then
+export nvdaurl=https://www.nvaccess.org/download/nvda/releases/$nvdaver"/nvda_"$nvdaver".exe"
+fi
 while true;do
-if curl -Lo nvda.exe https://www.nvaccess.org/download/nvda/releases/2023.3.4/nvda_2023.3.4.exe;then
+if curl -Lo nvda.exe $nvdaurl;then
 break
 else
 continue
