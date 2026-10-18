@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/sh
 export nvdaver=2024.1
 export mydir=$PWD
 if [ -z $WINEDEBUG ];then
@@ -70,7 +70,7 @@ else
 continue
 fi
 done
-chmod 700 $cabtmp/winetricks 
+chmod 700 $cabtmp/winetricks
 export prevpath=$PATH
 export PATH=$cabtmp:$prevpath
 export winetricks=$cabtmp/winetricks
